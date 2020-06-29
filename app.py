@@ -1,6 +1,7 @@
 import json
 import os
 from hashlib import md5
+from pathlib import Path
 from time import localtime
 
 import numpy as np
@@ -31,6 +32,8 @@ def csv():
 
     file = request.files['file']
     prefix = md5(str(localtime()).encode('utf-8')).hexdigest()
+
+    Path('csv').mkdir(parents=True, exist_ok=True)
     path = os.path.join(uploads_dir, f"{prefix}_{file.filename}")
     file.save(path)
 
@@ -65,6 +68,8 @@ def train_model():
     rfc_pred = rfc.predict(X_test)
     classificationReport = classification_report(y_test, rfc_pred, output_dict=True)
     confusionMatrix = confusion_matrix(y_test, rfc_pred)
+
+    Path('models').mkdir(parents=True, exist_ok=True)
 
     dump(rfc, open(model_rfc_path, 'wb+'))
 
@@ -103,6 +108,9 @@ def predict():
         "results": result
     })
 
+@app.route('/')
+def index():
+    return "<h1>Welcome!</h1>"
 
 def clean_dataframe(df):
     df.drop(['ID'], axis=1, inplace=True)
@@ -121,3 +129,8 @@ def clean_dataframe(df):
 
     df.dropna(subset=['countryOrigin'], inplace=True)
     df.dropna(subset=['transactionType'], inplace=True)
+
+
+if __name__ == '__main__':
+    # Threaded option to enable multiple instances for multiple user access support
+    app.run(threaded=True, port=5000)
